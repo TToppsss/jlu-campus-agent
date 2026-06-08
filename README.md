@@ -105,7 +105,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 API 文档自动生成：http://localhost:8000/docs
 
-### 6. 启动前端
+### 6. 启动前端（开发模式）
 
 ```bash
 cd frontend
@@ -113,7 +113,53 @@ npm install
 npm run dev
 ```
 
-前端运行在 http://localhost:5173
+开发模式下前端运行在 http://localhost:5173，API 请求自动代理到后端 8000 端口。
+
+### 7. 生产部署（单端口）
+
+构建前端静态文件，由 FastAPI 统一托管：
+
+```bash
+cd frontend && npm run build
+cd ../backend
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+访问 http://localhost:8000 即可使用完整应用。
+
+## 部署方案
+
+### 花生壳内网穿透（免公网 IP）
+
+1. 下载 [花生壳客户端](https://hsk.oray.com)，注册并实名认证
+
+2. 在花生壳中添加端口映射：
+
+| 设置项 | 值 |
+|--------|-----|
+| 内网主机 | `127.0.0.1` |
+| 内网端口 | `8000` |
+
+3. 启动后端（单端口模式）：
+
+```bash
+cd frontend && npm run build
+cd ../backend
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+4. 花生壳会分配一个外网域名（如 `xxx.oray.vip`），将域名分享给其他人即可访问
+
+> 免费版每月 1GB 流量、1Mbps 带宽，适合小规模使用。
+
+### 云服务部署
+
+| 组件 | 推荐平台 |
+|------|----------|
+| 后端 | Railway / Fly.io / 阿里云 ECS |
+| 前端 | Vercel / Netlify（连 GitHub 自动部署）|
+| Redis | Upstash（免费云 Redis）|
 
 ## 项目结构
 

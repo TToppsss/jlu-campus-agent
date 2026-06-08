@@ -1,7 +1,10 @@
 import asyncio
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import FileResponse
+from starlette.staticfiles import StaticFiles
 
 from app.api import agent, auth, conversations, edu, health
 from app.config import settings
@@ -10,6 +13,8 @@ from app.oa.crawler import refresh_oa_notices
 from app.rag.ingest import ingest_notices_by_ids
 
 app = FastAPI(title=settings.app_name)
+
+FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 
 
 async def oa_refresh_loop() -> None:
@@ -47,3 +52,13 @@ app.include_router(auth.router, prefix="/api/auth")
 app.include_router(conversations.router, prefix="/api/conversations")
 app.include_router(edu.router, prefix="/api/edu")
 app.include_router(agent.router, prefix="/api/agent")
+
+if FRONTEND_DIST.is_dir():
+    app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str = ""):
+        if full_path and FRONTEND_DIST.joinpath(full_path).is_file():
+            return FileResponse(FRONTEND_DIST / full_path)
+        return FileResponse(FRONTEND_DIST / "index.html")
+
